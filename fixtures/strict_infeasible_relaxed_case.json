@@ -1,0 +1,238 @@
+{
+  "schema": "meshcutover.case.v1",
+  "case_id": "strict_infeasible_capacity_forces_relaxed_resolve",
+  "regions": [
+    "cn-north"
+  ],
+  "certificates": {
+    "cert-mesh": {
+      "trust_zone": "tz-mesh"
+    }
+  },
+  "inspection_groups": [
+    "secops",
+    "netops"
+  ],
+  "path_policy": {
+    "required_paths": 2,
+    "failure_required_paths": 2,
+    "disjoint_failure_domains": true
+  },
+  "nodes": [
+    {
+      "id": "checkout-client",
+      "kind": "client",
+      "switch_group": "g-source"
+    },
+    {
+      "id": "checkout-r1",
+      "kind": "service-replica",
+      "switch_group": "g-replicas"
+    },
+    {
+      "id": "checkout-r2",
+      "kind": "service-replica",
+      "switch_group": "g-replicas"
+    },
+    {
+      "id": "sec-old1",
+      "kind": "inspection",
+      "ops_group": "secops",
+      "failure_domain": "fd-old-a"
+    },
+    {
+      "id": "net-old1",
+      "kind": "inspection",
+      "ops_group": "netops",
+      "failure_domain": "fd-old-a"
+    },
+    {
+      "id": "sec-old2",
+      "kind": "inspection",
+      "ops_group": "secops",
+      "failure_domain": "fd-old-b"
+    },
+    {
+      "id": "net-old2",
+      "kind": "inspection",
+      "ops_group": "netops",
+      "failure_domain": "fd-old-b"
+    },
+    {
+      "id": "sec-new1",
+      "kind": "inspection",
+      "ops_group": "secops",
+      "failure_domain": "fd-new-c"
+    },
+    {
+      "id": "net-new1",
+      "kind": "inspection",
+      "ops_group": "netops",
+      "failure_domain": "fd-new-c"
+    },
+    {
+      "id": "sec-new2",
+      "kind": "inspection",
+      "ops_group": "secops",
+      "failure_domain": "fd-new-d"
+    },
+    {
+      "id": "net-new2",
+      "kind": "inspection",
+      "ops_group": "netops",
+      "failure_domain": "fd-new-d"
+    },
+    {
+      "id": "sec-stable",
+      "kind": "inspection",
+      "ops_group": "secops",
+      "failure_domain": "fd-stable"
+    },
+    {
+      "id": "net-stable",
+      "kind": "inspection",
+      "ops_group": "netops",
+      "failure_domain": "fd-stable"
+    }
+  ],
+  "edges": [
+    {
+      "id": "old-r1",
+      "from": "checkout-client",
+      "to": "checkout-r1",
+      "region": "cn-north",
+      "peer_cert": "cert-mesh",
+      "cert_zone": "tz-mesh",
+      "scope": "checkout",
+      "inspection_nodes": [
+        "sec-old1",
+        "net-old1"
+      ],
+      "allowed": {
+        "old": true,
+        "new": false
+      }
+    },
+    {
+      "id": "old-r2",
+      "from": "checkout-client",
+      "to": "checkout-r2",
+      "region": "cn-north",
+      "peer_cert": "cert-mesh",
+      "cert_zone": "tz-mesh",
+      "scope": "checkout",
+      "inspection_nodes": [
+        "sec-old2",
+        "net-old2"
+      ],
+      "allowed": {
+        "old": true,
+        "new": false
+      }
+    },
+    {
+      "id": "new-r1",
+      "from": "checkout-client",
+      "to": "checkout-r1",
+      "region": "cn-north",
+      "peer_cert": "cert-mesh",
+      "cert_zone": "tz-mesh",
+      "scope": "checkout",
+      "inspection_nodes": [
+        "sec-new1",
+        "net-new1"
+      ],
+      "allowed": {
+        "old": false,
+        "new": true
+      }
+    },
+    {
+      "id": "new-r2",
+      "from": "checkout-client",
+      "to": "checkout-r2",
+      "region": "cn-north",
+      "peer_cert": "cert-mesh",
+      "cert_zone": "tz-mesh",
+      "scope": "checkout",
+      "inspection_nodes": [
+        "sec-new2",
+        "net-new2"
+      ],
+      "allowed": {
+        "old": false,
+        "new": true
+      }
+    },
+    {
+      "id": "stable-r1",
+      "from": "checkout-client",
+      "to": "checkout-r1",
+      "region": "cn-north",
+      "peer_cert": "cert-mesh",
+      "cert_zone": "tz-mesh",
+      "scope": "checkout",
+      "inspection_nodes": [
+        "sec-stable",
+        "net-stable"
+      ],
+      "allowed": {
+        "old": true,
+        "new": true
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": "checkout",
+      "source": "checkout-client",
+      "replicas": [
+        "checkout-r1",
+        "checkout-r2"
+      ],
+      "scope": "checkout",
+      "critical": true
+    }
+  ],
+  "switch_groups": [
+    {
+      "id": "g-source",
+      "nodes": [
+        "checkout-client"
+      ],
+      "migration_units": 1,
+      "weight": 1,
+      "downtime_seconds": 10
+    },
+    {
+      "id": "g-replicas",
+      "nodes": [
+        "checkout-r1",
+        "checkout-r2"
+      ],
+      "migration_units": 1,
+      "weight": 2,
+      "downtime_seconds": 10
+    }
+  ],
+  "batch": {
+    "capacity": 1,
+    "windows": [
+      {
+        "id": "w1",
+        "capacity": 1
+      },
+      {
+        "id": "w2",
+        "capacity": 1
+      },
+      {
+        "id": "w3",
+        "capacity": 1
+      }
+    ]
+  },
+  "protected_businesses": [
+    "checkout"
+  ]
+}

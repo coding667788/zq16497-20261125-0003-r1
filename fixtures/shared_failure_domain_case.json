@@ -1,0 +1,61 @@
+{
+  "schema": "meshcutover.case.v1",
+  "case_id": "two-compliant-paths-share-one-physical-domain",
+  "regions": ["cn-east"],
+  "certificates": {
+    "cert-shared": {"trust_zone": "tz-shared"}
+  },
+  "inspection_groups": ["secops", "netops"],
+  "path_policy": {
+    "required_paths": 2,
+    "failure_required_paths": 1,
+    "disjoint_failure_domains": true
+  },
+  "nodes": [
+    {"id": "order-client", "kind": "client", "switch_group": "g-endpoints"},
+    {"id": "order-r1", "kind": "service-replica", "switch_group": "g-endpoints"},
+    {"id": "order-r2", "kind": "service-replica", "switch_group": "g-endpoints"},
+
+    {"id": "sec-path1", "kind": "inspection", "ops_group": "secops", "failure_domain": "fd-shared-rack"},
+    {"id": "net-path1", "kind": "inspection", "ops_group": "netops", "failure_domain": "fd-shared-rack"},
+    {"id": "sec-path2", "kind": "inspection", "ops_group": "secops", "failure_domain": "fd-shared-rack"},
+    {"id": "net-path2", "kind": "inspection", "ops_group": "netops", "failure_domain": "fd-shared-rack"}
+  ],
+  "edges": [
+    {
+      "id": "shared-path-1",
+      "from": "order-client",
+      "to": "order-r1",
+      "region": "cn-east",
+      "peer_cert": "cert-shared",
+      "cert_zone": "tz-shared",
+      "scope": "order",
+      "inspection_nodes": ["sec-path1", "net-path1"],
+      "allowed": {"old": true, "new": true}
+    },
+    {
+      "id": "shared-path-2",
+      "from": "order-client",
+      "to": "order-r2",
+      "region": "cn-east",
+      "peer_cert": "cert-shared",
+      "cert_zone": "tz-shared",
+      "scope": "order",
+      "inspection_nodes": ["sec-path2", "net-path2"],
+      "allowed": {"old": true, "new": true}
+    }
+  ],
+  "services": [
+    {
+      "id": "order",
+      "source": "order-client",
+      "replicas": ["order-r1", "order-r2"],
+      "scope": "order",
+      "critical": true
+    }
+  ],
+  "switch_groups": [
+    {"id": "g-endpoints", "nodes": ["order-client", "order-r1", "order-r2"], "migration_units": 1}
+  ],
+  "batch": {"capacity": 1}
+}

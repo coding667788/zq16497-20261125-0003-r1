@@ -1,0 +1,5 @@
+{
+  "batches": [
+    {"id": "b1", "groups": ["g-endpoints"]}
+  ]
+}

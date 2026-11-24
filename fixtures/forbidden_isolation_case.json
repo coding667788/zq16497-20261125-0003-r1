@@ -1,0 +1,58 @@
+{
+  "schema": "meshcutover.case.v1",
+  "case_id": "candidate-hard-isolation-blocks-forbidden-authorization",
+  "regions": ["cn-north"],
+  "certificates": {"cert-mesh": {"trust_zone": "tz-mesh"}},
+  "inspection_groups": ["secops", "netops"],
+  "path_policy": {"required_paths": 2, "failure_required_paths": 1},
+  "nodes": [
+    {"id": "pay-client", "kind": "client", "switch_group": "g-pay"},
+    {"id": "pay-r1", "kind": "service-replica", "switch_group": "g-pay"},
+    {"id": "pay-r2", "kind": "service-replica", "switch_group": "g-pay"},
+    {"id": "sec-pay1", "kind": "inspection", "ops_group": "secops", "failure_domain": "fd-pay-1"},
+    {"id": "net-pay1", "kind": "inspection", "ops_group": "netops", "failure_domain": "fd-pay-1"},
+    {"id": "sec-pay2", "kind": "inspection", "ops_group": "secops", "failure_domain": "fd-pay-2"},
+    {"id": "net-pay2", "kind": "inspection", "ops_group": "netops", "failure_domain": "fd-pay-2"},
+
+    {"id": "rogue-client", "kind": "client"},
+    {"id": "secret-db", "kind": "service-replica"},
+    {"id": "sec-rogue", "kind": "inspection", "ops_group": "secops", "failure_domain": "fd-rogue"},
+    {"id": "net-rogue", "kind": "inspection", "ops_group": "netops", "failure_domain": "fd-rogue"}
+  ],
+  "edges": [
+    {
+      "id": "pay-path1", "from": "pay-client", "to": "pay-r1",
+      "region": "cn-north", "peer_cert": "cert-mesh", "cert_zone": "tz-mesh",
+      "scope": "pay", "inspection_nodes": ["sec-pay1", "net-pay1"],
+      "allowed": {"old": true, "new": true}
+    },
+    {
+      "id": "pay-path2", "from": "pay-client", "to": "pay-r2",
+      "region": "cn-north", "peer_cert": "cert-mesh", "cert_zone": "tz-mesh",
+      "scope": "pay", "inspection_nodes": ["sec-pay2", "net-pay2"],
+      "allowed": {"old": true, "new": true}
+    },
+    {
+      "id": "rogue-secret-path", "from": "rogue-client", "to": "secret-db",
+      "region": "cn-north", "peer_cert": "cert-mesh", "cert_zone": "tz-mesh",
+      "scope": "secret", "inspection_nodes": ["sec-rogue", "net-rogue"],
+      "allowed": {"old": true, "new": true}
+    }
+  ],
+  "services": [
+    {"id": "pay", "source": "pay-client", "replicas": ["pay-r1", "pay-r2"], "scope": "pay"}
+  ],
+  "forbidden_pairs": [
+    {"id": "deny-rogue-secret", "source": "rogue-client", "target": "secret-db", "scope": "secret"}
+  ],
+  "switch_groups": [
+    {"id": "g-pay", "nodes": ["pay-client", "pay-r1", "pay-r2"], "migration_units": 1,
+     "weight": 1, "downtime_seconds": 5}
+  ],
+  "batch": {"capacity": 1, "windows": [{"id": "w1", "capacity": 1}]},
+  "isolation_operations": [
+    {"id": "iso-edge-cheap", "disable_edges": ["rogue-secret-path"], "weighted_downtime": 7},
+    {"id": "iso-domain-pricey", "disable_failure_domains": ["fd-rogue"], "weighted_downtime": 20}
+  ],
+  "protected_businesses": ["pay"]
+}

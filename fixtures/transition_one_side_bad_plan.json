@@ -1,0 +1,17 @@
+{
+  "schema": "meshcutover.plan.v1",
+  "batches": [
+    {
+      "id": "b1-only-source-side",
+      "window_id": "w1",
+      "groups": ["g-source"],
+      "isolation_operations": []
+    },
+    {
+      "id": "b2-replica-side",
+      "window_id": "w2",
+      "groups": ["g-replicas"],
+      "isolation_operations": []
+    }
+  ]
+}
